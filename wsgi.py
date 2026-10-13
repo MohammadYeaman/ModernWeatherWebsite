@@ -1,7 +1,12 @@
+import os
 from app import app
 from waitress import serve
 
 if __name__ == "__main__":
-  print("Starting production WSGI server on http://127.0.0.1:5000 ...")
-  # Serve the Flask app using Waitress
-  serve(app, host="127.0.0.1", port=5000, threads=4)
+  # Grab Render's dynamic port, defaulting to 5000 for local testing
+  port = int(os.environ.get("PORT", 5000))
+
+  print(f"Starting production WSGI server on 0.0.0.0:{port} ...")
+
+  # Bind to 0.0.0.0 so Render can detect the open port
+  serve(app, host="0.0.0.0", port=port, threads=4)

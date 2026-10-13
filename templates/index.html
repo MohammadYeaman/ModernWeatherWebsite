@@ -66,9 +66,14 @@
                 <i data-lucide="thermometer" class="w-4 h-4 text-amber-300"></i>
                 <span id="unitToggleText">°C / °F</span>
             </button>
-            <button onclick="exportYearlyWeatherData()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 rounded-xl text-xs font-semibold text-emerald-100 shadow-sm transition-all" title="Download 1-Year Historical CSV Data">
+            <button onclick="exportYearlyWeatherData()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/30 rounded-xl text-xs font-semibold text-emerald-100 shadow-sm transition-all" title="Download 1-Year Historical CSV Data">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-300"></i>
                 <span>1-Year CSV</span>
+            </button>
+            <!--- Link to ML Forecast Hub passing current city -->
+            <button onclick="goToForecastHub()" class="flex items-center gap-1.5 px-3.5 py-2 bg-purple-500/25 hover:bg-purple-500/35 border border-purple-400/30 rounded-xl text-xs font-semibold text-purple-100 shadow-sm transition-all" title="View ML Regression Forecast Hub">
+                <i data-lucide="brain-circuit" class="w-4 h-4 text-purple-300"></i>
+                <span>ML Hub</span>
             </button>
         </div>
     </header>
@@ -202,6 +207,22 @@
                     <i data-lucide="download" class="w-4 h-4"></i> Download 1-Year CSV
                 </button>
             </div>
+            <!-- Go To ML Panel -->
+            <div class="bg-gradient-to-br from-purple-600/35 to-indigo-800/35 backdrop-blur-xl border border-purple-400/30 rounded-3xl p-6 shadow-xl text-white">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="p-2.5 bg-purple-500/20 rounded-2xl border border-purple-300/30">
+                        <i data-lucide="brain-circuit" class="w-6 h-6 text-purple-300"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-base">Machine Learning Hub</h4>
+                        <p class="text-xs text-purple-200">Linear Regression & Predictions</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-200 mb-4">Run scikit-learn ordinary least squares (OLS) regression models to forecast next-month temperature trends for this city.</p>
+                <button onclick="goToForecastHub()" class="w-full py-3 bg-purple-600 hover:bg-purple-700 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider text-white">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-purple-200"></i> Run Prediction Model
+                </button>
+            </div>
 
         </div>
 
@@ -209,7 +230,8 @@
 
     <!-- Footer -->
     <footer class="w-full text-center py-4 text-xs text-slate-400 border-t border-white/10 bg-black/20">
-        Weather Station &bull; Powered by OpenStreetMap Nominatim, NWS Weather.gov & Open-Meteo APIs
+        Developed By: Yeaman Bhuiyan
+        Credit: Weather Station &bull; OpenStreetMap Nominatim, NWS Weather.gov & Open-Meteo APIs
     </footer>
 
     <!-- JavaScript Application Logic -->
@@ -372,6 +394,10 @@
             const cityName = currentCity || "New York";
             // Direct the browser to the Flask CSV download endpoint
             window.location.href = `/api/download-csv?city=${encodeURIComponent(cityName)}`;
+        }
+        function goToForecastHub(){
+            const cityName = currentCity || "New York"
+            window.location.href = `/forecast-hub?city=${encodeURIComponent(cityName)}`;
         }
     </script>
 </body>

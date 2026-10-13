@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Weather Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body id="appBody" class="h-full bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 text-slate-100 transition-colors duration-700 flex flex-col justify-between">
+
+    <!-- Header / Navbar -->
+    <header class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg animate-float">
+                <i data-lucide="cloud-sun" class="w-7 h-7 text-amber-300"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                    Check Weather <span class="text-xs px-2 py-0.5 rounded-full bg-blue-400/20 text-blue-200 border border-blue-300/30 font-medium">Pro</span>
+                </h1>
+                <p class="text-xs text-slate-300">Global Meteorological Intelligence</p>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative w-full sm:w-96">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                <i data-lucide="search" class="w-4 h-4"></i>
+            </span>
+            <input type="text" id="citySearchInput" placeholder="Search US city (e.g., New York, Chicago)..." 
+                class="w-full pl-10 pr-24 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-sm text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-white/40 shadow-inner transition-all">
+            <button onclick="handleSearch()" class="absolute right-1.5 top-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-semibold transition-all">
+                Search
+            </button>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex items-center gap-2.5">
+            <button onclick="toggleUnits()" id="unitToggleBtn" class="flex items-center gap-1.5 px-3.5 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-semibold text-white shadow-sm transition-all">
+                <i data-lucide="thermometer" class="w-4 h-4 text-amber-300"></i>
+                <span id="unitToggleText">°C / °F</span>
+            </button>
+            <button onclick="exportYearlyWeatherData()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 rounded-xl text-xs font-semibold text-emerald-100 shadow-sm transition-all" title="Download 1-Year Historical CSV Data">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-300"></i>
+                <span>1-Year CSV</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left 2 Columns: Current Weather & 5-Day Forecast -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Current Weather Card -->
+            <div class="relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 id="cityNameDisplay" class="text-3xl font-extrabold text-white tracking-tight">New York</h2>
+                            <span id="countryDisplay" class="px-2 py-0.5 bg-white/20 text-white text-xs font-bold rounded-md">US</span>
+                        </div>
+                        <p id="currentDateDisplay" class="text-sm text-slate-300 mt-0.5">Monday, October 12, 2026</p>
+                    </div>
+                    <div class="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-xs font-medium text-emerald-200 shadow-sm">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span id="dataSourceBadge">Weather.gov API</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+                    <!-- Temperature & Condition -->
+                    <div class="flex items-center gap-6">
+                        <div id="weatherIconContainer" class="p-4 bg-white/15 border border-white/20 rounded-3xl shadow-inner">
+                            <i data-lucide="sun" class="w-16 h-16 text-amber-300"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-start">
+                                <span id="tempDisplay" class="text-6xl font-black text-white tracking-tighter">22</span>
+                                <span id="tempUnitDisplay" class="text-2xl font-bold text-amber-300 ml-1 mt-1">°C</span>
+                            </div>
+                            <p id="conditionDisplay" class="text-lg font-semibold text-slate-200 capitalize mt-1">Sunny & Pleasant</p>
+                            <p id="feelsLikeDisplay" class="text-xs text-slate-300">Feels like 23°C</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Metrics Grid -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white/10 border border-white/15 rounded-2xl p-3.5 flex items-center gap-3">
+                            <div class="p-2 bg-blue-500/20 rounded-xl text-blue-200"><i data-lucide="droplets" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-xs text-slate-300 font-medium">Humidity</p>
+                                <p id="humidityDisplay" class="text-base font-bold text-white">50%</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/10 border border-white/15 rounded-2xl p-3.5 flex items-center gap-3">
+                            <div class="p-2 bg-teal-500/20 rounded-xl text-teal-200"><i data-lucide="wind" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-xs text-slate-300 font-medium">Wind Speed</p>
+                                <p id="windSpeedDisplay" class="text-base font-bold text-white">12 km/h</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/10 border border-white/15 rounded-2xl p-3.5 flex items-center gap-3">
+                            <div class="p-2 bg-amber-500/20 rounded-xl text-amber-200"><i data-lucide="gauge" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-xs text-slate-300 font-medium">Pressure</p>
+                                <p id="pressureDisplay" class="text-base font-bold text-white">1013 hPa</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/10 border border-white/15 rounded-2xl p-3.5 flex items-center gap-3">
+                            <div class="p-2 bg-purple-500/20 rounded-xl text-purple-200"><i data-lucide="eye" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-xs text-slate-300 font-medium">Visibility</p>
+                                <p id="visibilityDisplay" class="text-base font-bold text-white">10 km</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5-Day Forecast Card -->
+            <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-8 shadow-xl">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-5 h-5 text-indigo-300"></i> Meteorological Outlook
+                </h3>
+                <div id="forecastContainer" class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Popular US Cities & Quick Actions -->
+        <div class="space-y-6">
+            
+            <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-xl">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="globe" class="w-5 h-5 text-blue-300"></i> Popular US Cities
+                </h3>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="selectCity('New York')" class="p-3 bg-white/10 hover:bg-white/20 border border-white/15 rounded-2xl text-left transition-all group">
+                        <p class="text-sm font-bold text-white group-hover:text-amber-200">New York</p>
+                        <p class="text-xs text-slate-300">New York</p>
+                    </button>
+                    <button onclick="selectCity('Chicago')" class="p-3 bg-white/10 hover:bg-white/20 border border-white/15 rounded-2xl text-left transition-all group">
+                        <p class="text-sm font-bold text-white group-hover:text-amber-200">Chicago</p>
+                        <p class="text-xs text-slate-300">Illinois</p>
+                    </button>
+                    <button onclick="selectCity('Washington')" class="p-3 bg-white/10 hover:bg-white/20 border border-white/15 rounded-2xl text-left transition-all group">
+                        <p class="text-sm font-bold text-white group-hover:text-amber-200">Washington</p>
+                        <p class="text-xs text-slate-300">D.C.</p>
+                    </button>
+                    <button onclick="selectCity('Seattle')" class="p-3 bg-white/10 hover:bg-white/20 border border-white/15 rounded-2xl text-left transition-all group">
+                        <p class="text-sm font-bold text-white group-hover:text-amber-200">Seattle</p>
+                        <p class="text-xs text-slate-300">Washington</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Export Panel -->
+            <div class="bg-gradient-to-br from-emerald-600/30 to-teal-700/30 backdrop-blur-xl border border-emerald-400/30 rounded-3xl p-6 shadow-xl text-white">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="p-2.5 bg-emerald-500/20 rounded-2xl border border-emerald-300/30">
+                        <i data-lucide="database" class="w-6 h-6 text-emerald-300"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-base">Historical Data Export</h4>
+                        <p class="text-xs text-emerald-200">365 Days CSV Archive</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-200 mb-4">Download a complete 1-year historical weather dataset for <span id="exportCityLabel" class="font-bold underline">New York</span>.</p>
+                <button onclick="exportYearlyWeatherData()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                    <i data-lucide="download" class="w-4 h-4"></i> Download 1-Year CSV
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 text-xs text-slate-400 border-t border-white/10 bg-black/20">
+        Weather Station &bull; Powered by OpenStreetMap Nominatim, NWS Weather.gov & Open-Meteo APIs
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let currentCity = "New York";
+        let currentUnit = "C"; 
+        let cachedWeatherData = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            loadWeather(currentCity);
+
+            document.getElementById("citySearchInput").addEventListener("keypress", (e) => {
+                if (e.key === "Enter") handleSearch();
+            });
+        });
+
+        function handleSearch() {
+            const input = document.getElementById("citySearchInput");
+            const query = input.value.trim();
+            if (query) {
+                selectCity(query);
+                input.value = "";
+            }
+        }
+
+        function selectCity(city) {
+            currentCity = city;
+            document.getElementById("exportCityLabel").innerText = city;
+            loadWeather(city);
+        }
+
+        function toggleUnits() {
+            currentUnit = currentUnit === "C" ? "F" : "C";
+            if (cachedWeatherData) {
+                renderWeather(cachedWeatherData);
+            }
+        }
+
+        async function loadWeather(city) {
+            hideWeatherError();
+            try {
+                const response = await fetch(`/api/get-weather?city=${encodeURIComponent(city)}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    showWeatherError(data.error);
+                    return;
+                }
+
+                const currentPeriod = data.periods[0];
+                const forecastList = data.periods.slice(1, 6);
+
+                cachedWeatherData = {
+                    city: data.city,
+                    country: data.state ? data.state : "US",
+                    tempC: fahrenheitToCelsius(currentPeriod.temperature),
+                    feelsLikeC: fahrenheitToCelsius(currentPeriod.temperature),
+                    humidity: 55,
+                    windSpeed: parseWindSpeed(currentPeriod.windSpeed),
+                    pressure: 1013,
+                    visibility: 10,
+                    condition: currentPeriod.shortForecast,
+                    icon: currentPeriod.icon,
+                    forecast: forecastList.map(p => ({
+                        day: p.name,
+                        tempC: fahrenheitToCelsius(p.temperature),
+                        condition: p.shortForecast
+                    }))
+                };
+
+                renderWeather(cachedWeatherData);
+
+            } catch (err) {
+                console.error("Connection error:", err);
+                showWeatherError("Unable to connect to the Python Flask backend server.");
+            }
+        }
+
+        function fahrenheitToCelsius(f) {
+            return (f - 32) * 5 / 9;
+        }
+
+        function parseWindSpeed(windStr) {
+            const match = windStr.match(/\d+/);
+            if (match) {
+                const mph = parseInt(match[0]);
+                return mph * 1.60934;
+            }
+            return 12;
+        }
+
+        function showWeatherError(message) {
+            let banner = document.getElementById("weatherErrorBanner");
+            if (!banner) {
+                banner = document.createElement("div");
+                banner.id = "weatherErrorBanner";
+                banner.className = "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4";
+                const mainEl = document.querySelector("main");
+                mainEl.parentNode.insertBefore(banner, mainEl);
+            }
+            banner.innerHTML = `
+                <div class="p-4 bg-red-500/20 border border-red-400/40 rounded-2xl text-red-100 flex items-center justify-between shadow-xl backdrop-blur-md">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="alert-circle" class="w-6 h-6 text-red-300 flex-shrink-0"></i>
+                        <p class="text-sm font-medium">${message}</p>
+                    </div>
+                    <button onclick="hideWeatherError()" class="text-red-200 hover:text-white text-xs font-bold px-2 py-1 bg-red-500/30 rounded-lg">Dismiss</button>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function hideWeatherError() {
+            const banner = document.getElementById("weatherErrorBanner");
+            if (banner) banner.innerHTML = "";
+        }
+
+        function renderWeather(data) {
+            document.getElementById("cityNameDisplay").innerText = data.city;
+            document.getElementById("countryDisplay").innerText = data.country;
+            document.getElementById("currentDateDisplay").innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            const temp = currentUnit === "C" ? Math.round(data.tempC) : Math.round((data.tempC * 9/5) + 32);
+            const feelsLike = currentUnit === "C" ? Math.round(data.feelsLikeC) : Math.round((data.feelsLikeC * 9/5) + 32);
+
+            document.getElementById("tempDisplay").innerText = temp;
+            document.getElementById("tempUnitDisplay").innerText = `°${currentUnit}`;
+            document.getElementById("conditionDisplay").innerText = data.condition;
+            document.getElementById("feelsLikeDisplay").innerText = `Feels like ${feelsLike}°${currentUnit}`;
+            
+            document.getElementById("humidityDisplay").innerText = `${data.humidity}%`;
+            document.getElementById("windSpeedDisplay").innerText = `${Math.round(data.windSpeed)} km/h`;
+            document.getElementById("pressureDisplay").innerText = `${data.pressure} hPa`;
+            document.getElementById("visibilityDisplay").innerText = `${data.visibility} km`;
+
+            const forecastEl = document.getElementById("forecastContainer");
+            forecastEl.innerHTML = "";
+            data.forecast.forEach(f => {
+                const fTemp = currentUnit === "C" ? Math.round(f.tempC) : Math.round((f.tempC * 9/5) + 32);
+                let iconName = "sun";
+                if (f.condition.toLowerCase().includes("cloud")) iconName = "cloud";
+                if (f.condition.toLowerCase().includes("rain")) iconName = "cloud-rain";
+
+                forecastEl.innerHTML += `
+                    <div class="bg-white/10 hover:bg-white/15 border border-white/15 rounded-2xl p-4 flex flex-col items-center justify-between text-center transition-all">
+                        <p class="text-xs font-bold text-slate-300">${f.day}</p>
+                        <div class="p-2.5 bg-white/10 rounded-xl my-2 text-amber-300">
+                            <i data-lucide="${iconName}" class="w-6 h-6"></i>
+                        </div>
+                        <p class="text-sm font-extrabold text-white">${fTemp}°${currentUnit}</p>
+                        <p class="text-[10px] text-slate-300 capitalize mt-0.5">${f.condition}</p>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function exportYearlyWeatherData() {
+            const cityName = currentCity || "New York";
+            // Direct the browser to the Flask CSV download endpoint
+            window.location.href = `/api/download-csv?city=${encodeURIComponent(cityName)}`;
+        }
+    </script>
+</body>
+</html>

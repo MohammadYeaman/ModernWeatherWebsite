@@ -1,6 +1,7 @@
 from datetime import date
 import pandas as pd
 import requests
+import io
 
 end_date = date.today()
 try:
@@ -85,18 +86,6 @@ def get_weather_forecast(lat, lon):
     if forecast_response.status_code == 200:
       forecast_data = forecast_response.json()
       periods = forecast_data["properties"]["periods"]
-
-      try:
-        download_1_year_weather_csv(
-            lat=lat,
-            lon=lon,
-            start_date=start_date,
-            end_date=end_date,
-            filename=f"{city_name.lower()}_weather.csv",
-        )
-      except Exception as e:
-        print("CSV export note:", e)
-
       return {"city": city_name, "state": state_name, "periods": periods}, None
 
   except Exception as e:
@@ -105,10 +94,7 @@ def get_weather_forecast(lat, lon):
   # Return pre-valid fallback data if any network error occurs
   return {"city": "New York", "state": "NY", "periods": pre_valid_periods}, None
 
-
-def download_1_year_weather_csv(
-    lat, lon, start_date, end_date, filename="weather_last_year.csv"
-):
+def get_clean_weather_csv(lat, lon, start_date, end_date):
   url = "https://archive-api.open-meteo.com/v1/archive"
   params = {
       "latitude": lat,
@@ -129,7 +115,36 @@ def download_1_year_weather_csv(
     lines = response.text.splitlines()
     clean_lines = lines[3:]
     clean_text = "\n".join(clean_lines)
-    with open(filename, "w", encoding="utf-8") as f:
-      f.write(clean_text)
-    df = pd.read_csv(filename, comment="#")
-    df.to_csv(filename, index=False)
+
+    # Use pandas to clean/format it into a proper CSV string in memory
+    df = pd.read_csv(io.StringIO(clean_text), comment="#")
+    return df.to_csv(index=False)
+  return None
+
+
+def get_1_year_dataframe(lat, lon, start_date, end_date):
+  url = "https://archive-api.open-meteo.com/v1/archive"
+  params = {
+      "latitude": lat,
+      "longitude": lon,
+      "start_date": start_date.isoformat(),
+      "end_date": end_date.isoformat(),
+      "hourly": [
+          "temperature_2m",
+          "relative_humidity_2m",
+          "precipitation",
+          "wind_speed_10m",
+      ],
+      "format": "csv",
+  }
+
+  response = requests.get(url, params=params, timeout=5)
+  if response.status_code == 200:
+    lines = response.text.splitlines()
+    clean_lines = lines[3:]
+    clean_text = "\n".join(clean_lines)
+
+    # Read into pandas DataFrame and return
+    df = pd.read_csv(io.StringIO(clean_text), comment="#")
+    return df
+  return None

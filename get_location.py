@@ -11,16 +11,6 @@ def get_coordinates(user_input):
           "lon": "-74.0060",
           "display_name": "New York, NY, USA",
       },
-      "Chicago": {
-          "lat": "41.8781",
-          "lon": "-87.6298",
-          "display_name": "Chicago, IL, USA",
-      },
-      "Washington": {
-          "lat": "38.9072",
-          "lon": "-77.0369",
-          "display_name": "Washington, D.C., USA",
-      },
   }
 
   url = "https://nominatim.openstreetmap.org/search"
@@ -39,12 +29,6 @@ def get_coordinates(user_input):
         return lat, lon, display_name
   except Exception as e:
     print(f"Network warning (Nominatim): {e}")
-
-  # Fallback to pre-valid coordinates
-  if cleaned_input in fallback_locations:
-    loc = fallback_locations[cleaned_input]
-    print(f"Using pre-valid fallback for '{cleaned_input}'")
-    return loc["lat"], loc["lon"], loc["display_name"]
 
   # Default ultimate fallback
   default = fallback_locations["New York"]
